@@ -17,9 +17,14 @@ class CreateSubProcessesTable extends Migration
             $table->bigIncrements('id');
             $table->string('title')->unique();
             $table->string('slug')->unique();
-            $table->string('code')->unique();
             $table->tinyInteger("status")->default(1);
             $table->text('description')->nullable();
+            $table->smallInteger('positions_count');
+            $table->tinyInteger('occupied')->default(1);
+            $table->smallInteger('occupied_positions_count');
+            $table->smallInteger('conversion_positions_count');
+            $table->smallInteger('contracting_positions_count');
+            $table->smallInteger('below_expert_positions_count');
             $table->unsignedBigInteger('architecture_id');
             $table->unsignedBigInteger('process_id');
             $table->unsignedBigInteger("user_id");

@@ -17,9 +17,13 @@ class CreateArchitecturesTable extends Migration
             $table->bigIncrements('id');
             $table->string('title')->unique();
             $table->string('slug')->unique();
-            $table->string('code')->unique();
             $table->tinyInteger("status")->default(1);
             $table->text('description')->nullable();
+            $table->smallInteger('occupied_expert_positions_count');
+            $table->smallInteger('old_occupied_expert_positions_count');
+            $table->smallInteger('old_positions_count');
+            $table->smallInteger('old_processes_count');
+            $table->smallInteger('old_subProcesses_count');
             $table->enum('type',['administration','assistance']);
             $table->unsignedBigInteger("user_id");
             $table->foreign("user_id")->references("id")->on("users")->onDelete("cascade");
