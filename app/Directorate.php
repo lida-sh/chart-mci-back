@@ -4,10 +4,10 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 use Cviebrock\EloquentSluggable\Sluggable;
-class Process extends Model
+class Directorate extends Model
 {
     use Sluggable;
-    protected $table = "processes";
+    protected $table = "directorates";
     protected $guarded = [];
     public function sluggable(): array
     {
@@ -18,13 +18,13 @@ class Process extends Model
         ];
     }
     public function files(){
-        return $this->hasMany(ProcessFile::class, "process_id");
+        return $this->hasMany(DirectorateFile::class, "directorate_id");
     }
     public function architecture(){
         return $this->belongsTo(Architecture::class, "architecture_id");
     }
-    public function subProcesses(){
-        return $this->hasMany(SubProcess::class, "process_id");
+    public function departments(){
+        return $this->hasMany(Department::class, "directorate_id");
     }
     public function user(){
         return $this->belongsTo(User::class, "user_id");

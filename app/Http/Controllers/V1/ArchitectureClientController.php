@@ -6,6 +6,7 @@ use App\Architecture;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ArchitectureDetailsClientResource;
 use App\Http\Resources\ArchitectureTreeResource;
+use App\Http\Resources\ArchitectureTopResource;
 use Illuminate\Http\Request;
 use App\Http\Controllers\V1\Admin\ApiController;
 class ArchitectureClientController extends ApiController
@@ -20,6 +21,15 @@ class ArchitectureClientController extends ApiController
     }
     public function getTreeStructure($slug){
         $architecture = Architecture::where('slug', $slug)->first();
-        return $this->successResponse(new ArchitectureTreeResource($architecture->load(["processes"])),200);
+        // dd(new ArchitectureTreeResource($architecture->load(["directorates", "rootDepartments", "seniorExperts"])));
+        return $this->successResponse(new ArchitectureTreeResource($architecture->load(["directorates", "rootDepartments", "seniorExperts"])),200);
+    }
+    public function getTopChart(){
+        $deputy_architectures = Architecture::where('type', 'deputy')->get();
+        $directorate_architectures = Architecture::where('type', 'directorate')->get();
+        return $this->successResponse([
+            "deputy_architectures" => ArchitectureTopResource::collection($deputy_architectures),
+            "directorate_architectures" => ArchitectureTopResource::collection($directorate_architectures),
+        ], 200);
     }
 }

@@ -4,26 +4,24 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateProcessesTable extends Migration
+return new class extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
-    public function up()
+    public function up(): void
     {
-        Schema::create('processes', function (Blueprint $table) {
-            $table->bigIncrements('id');
-            $table->string('title')->unique();
+        Schema::create('senior_experts', function (Blueprint $table) {
+            $table->id();
+            $table->string('title');
             $table->string('slug')->unique();
-            $table->string('code')->unique();
-            $table->tinyInteger("status")->default(1);
+            $table->unsignedTinyInteger("status")->default(1);
             $table->text('description')->nullable();
-            $table->unsignedBigInteger("user_id");
+            $table->unsignedTinyInteger('positions_count');
             $table->unsignedBigInteger("architecture_id");
-            $table->foreign("user_id")->references("id")->on("users")->onDelete("cascade");
+            $table->unsignedBigInteger("user_id");
             $table->foreign("architecture_id")->references("id")->on("architectures")->onDelete("cascade");
+            $table->foreign("user_id")->references("id")->on("users")->onDelete("cascade");
             $table->softDeletes();
             $table->timestamps();
         });
@@ -31,11 +29,9 @@ class CreateProcessesTable extends Migration
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
-    public function down()
+    public function down(): void
     {
-        Schema::dropIfExists('processes');
+        Schema::dropIfExists('senior_experts');
     }
-}
+};

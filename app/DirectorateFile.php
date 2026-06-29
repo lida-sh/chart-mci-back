@@ -4,13 +4,13 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 
-class SubProcessFile extends Model
+class DirectorateFile extends Model
 {
-    protected $table = "sub_process_files";
+    protected $table = "directorate_files";
     protected $guarded = [];
 
-    public function subProcess(){
-        return $this->belongsTo(SubProcess::class, "sub_process_id");
+    public function directorate(){
+        return $this->belongsTo(Directorate::class, "directorate_id");
     }
     public function scopeWithAllowedExtensions($query, $extensions = ['pdf', 'jpeg', 'png', 'jpg'])
     {

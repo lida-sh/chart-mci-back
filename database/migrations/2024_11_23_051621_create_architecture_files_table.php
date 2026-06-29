@@ -19,7 +19,7 @@ class CreateArchitectureFilesTable extends Migration
             $table->foreign("architecture_id")->references("id")->on("architectures")->onDelete("cascade");
             $table->string("fileName");
             $table->string("filePath");
-            $table->tinyInteger("status")->default(1);
+            $table->unsignedTinyInteger("status")->default(1);
             $table->softDeletes();
             $table->timestamps();
         });

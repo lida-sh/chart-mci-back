@@ -20,6 +20,7 @@ class AuthController extends ApiController
     public function login(Request $request)
     {
         // dd($request->all());
+        
         $validator = Validator::make($request->all(), [
             'username' => 'required|email',
             'password' => 'required',
@@ -74,7 +75,7 @@ class AuthController extends ApiController
     public function refreshToken(Request $request): JsonResponse
     {
 
-        $response = Http::asForm()->post('http://dms-back.test/oauth/token', [
+        $response = Http::asForm()->post('http://chart-back.test/oauth/token', [
             'grant_type' => 'refresh_token',
             'refresh_token' => $request->refresh_token,
             'client_id' => env('PASSPORT_PASSWORD_CLIENT_ID'),

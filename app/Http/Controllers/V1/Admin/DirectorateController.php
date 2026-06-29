@@ -4,15 +4,16 @@ namespace App\Http\Controllers\V1\Admin;
 
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\ProcessResource;
-use App\Process;
-use App\ProcessFile;
+use App\Http\Resources\DirectorateResource;
+use App\Http\Resources\DirectorateDetaileResource ;
+use App\Directorate;
+use App\DirectorateFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Services\DataConverter;
 
-class ProcessController extends ApiController
+class DirectorateController extends ApiController
 {
     /**
      * Display a listing of the resource.
@@ -26,7 +27,7 @@ class ProcessController extends ApiController
         $architecture_id = $request->input("architecture_id");
         $status = $request->input("status");
         $sortedBy = $request->input("sortedBy");
-        $processes = Process::query()->when($architecture_id, function ($query, $architecture_id) {
+        $directorates = Directorate::query()->with("architecture", "user", "departments")->when($architecture_id, function ($query, $architecture_id) {
             return $query->where("architecture_id", $architecture_id);
         })->when($status, function ($query, $status) {
             if ($status == 1) {
@@ -43,9 +44,9 @@ class ProcessController extends ApiController
                 return $query->oldest();
         })->paginate(10);
         return $this->successResponse([
-            "processes" => ProcessResource::collection($processes->load(["architecture", "user"])),
-            "links" => ProcessResource::collection($processes)->response()->getData()->links,
-            "meta" => ProcessResource::collection($processes)->response()->getData()->meta
+            "directorates" => DirectorateDetaileResource ::collection($directorates),
+            "links" => DirectorateDetaileResource ::collection($directorates)->response()->getData()->links,
+            "meta" => DirectorateDetaileResource ::collection($directorates)->response()->getData()->meta
         ], 200);
         // return response()->json($processes, 200);
     }
@@ -57,11 +58,12 @@ class ProcessController extends ApiController
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
-    {
+    {   
         $validator = Validator::make($request->all(), [
             "architecture_id" => "required|integer",
-            "code" => "required|string|unique:processes,code",
             "status" => "required|string",
+            "occupied" => "required|string",
+            "office_manager_count"=>"required|integer|min:0",
             "files.*" => "file|max:2048",
         ]);
         //"title" => "required|string|unique:processes,title",
@@ -80,24 +82,24 @@ class ProcessController extends ApiController
 
         DB::beginTransaction();
 
-        $process = Process::create([
+        $directorate = Directorate::create([
             "title" => $request->title,
-            "code" => $request->code,
             "status" => $request->status,
+            "occupied" => $request->occupied,
+            "office_manager_count" => $request->office_manager_count,
             "description" => $request->description,
             "architecture_id" => $request->architecture_id,
             "user_id" => auth()->user()->id,
-            "notification_date" => $request->notification_date
+            
 
         ]);
         if ($request->hasFile('files')) {
             foreach ($request->file("files") as $file) {
                 $fileName = $file->getClientOriginalName();
-                // $filePath = time() . '.' . $file->getClientOriginalName();
                 $filePath = time() . '.' . $file->getClientOriginalExtension();
-                $file->storeAs('/files/processes', $filePath, 'public');
-                ProcessFile::create([
-                    "process_id" => $process->id,
+                $file->storeAs('/files/directorates', $filePath, 'public');
+                DirectorateFile::create([
+                    "directorate_id" => $directorate->id,
                     "fileName" => $fileName,
                     "filePath" => $filePath,
                     "status" => 1
@@ -108,7 +110,7 @@ class ProcessController extends ApiController
         }
         DB::commit();
         // return response()->json($data, $code);
-        return $this->successResponse($process, 201);
+        return $this->successResponse($directorate, 201);
     }
 
     /**
@@ -117,9 +119,10 @@ class ProcessController extends ApiController
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show(Process $process)
+    public function show(Directorate $directorate)
     {
-        return $this->successResponse((new ProcessResource($process->load("files")->load("architecture"))), 200);
+        
+        return $this->successResponse((new DirectorateResource($directorate->load("files")->load("architecture"))), 200);
     }
 
     /**
@@ -131,10 +134,12 @@ class ProcessController extends ApiController
      */
     public function update(Request $request, $id)
     {
-        // dd($request->all());
+        
         $validator = Validator::make($request->all(), [
             "architecture_id" => "required|integer",
-            "code" => "string|unique:processes,code," . $id,
+            "occupied" => "required|string",
+            "status" => "required|string",
+            "office_manager_count"=>"required|integer|min:0",
             "files.*" => "file|max:2048",
         ]);
        //"title" => "string|unique:processes,title," . $id,
@@ -152,18 +157,19 @@ class ProcessController extends ApiController
         }
 
         DB::beginTransaction();
-        $process = Process::findOrFail($id);
-        $process->slug = null;
-        $process->update([
+        $directorate = Directorate::findOrFail($id);
+        $directorate->slug = null;
+        $directorate->update([
             "architecture_id" => $request->architecture_id,
             "title" => $request->title,
-            "code" => $request->code,
+            "occupied" => $request->occupied,
+            "office_manager_count" => $request->office_manager_count,
             "description" => $request->description,
-            "notification_date" => DataConverter::convertToGregorian($request->notification_date)
+            "user_id" => auth()->user()->id,
         ]);
         if ($request->has("fileIdsForDelete")) {
             foreach ($request->fileIdsForDelete as $fileId) {
-                $file = ProcessFile::findOrFail($fileId);
+                $file = DirectorateFile::findOrFail($fileId);
                 if (file_exists($file->filePath)) {
                     unlink($file->filePath);
                 }
@@ -175,15 +181,15 @@ class ProcessController extends ApiController
                 $fileName = $file->getClientOriginalName();
                 $filePath = time() . '.' . $file->getClientOriginalName();
                 $file->storeAs('/files/processes', $filePath, 'public');
-                ProcessFile::create([
-                    "process_id" => $process->id,
+                DirectorateFile::create([
+                    "directorate_id" => $directorate->id,
                     "fileName" => $fileName,
                     "filePath" => $filePath
                 ]);
             }
         }
         DB::commit();
-        return $this->successResponse($process, 200);
+        return $this->successResponse($directorate, 200);
     }
 
     /**
@@ -194,21 +200,21 @@ class ProcessController extends ApiController
      */
     public function destroy($id)
     {
-        $process = Process::findOrFail($id);
-        foreach ($process->files as $file) {
+        $directorate = Directorate::findOrFail($id);
+        foreach ($directorate->files as $file) {
             $fullPath = public_path('storage/files/processes/'.$file->filePath);
             if (file_exists($fullPath)) {
                 unlink($fullPath);
             }
-            ProcessFile::findOrFail($file->id)->delete();
+            DirectorateFile::findOrFail($file->id)->delete();
         }
-        $process->delete();
+        $directorate->delete();
         return $this->successResponse(1, 200);
     }
     public function showBySlug($slug)
     {
-        $process = Process::where('slug', $slug)->first();
-        return $this->successResponse((new ProcessResource($process->load("files")->load("architecture"))), 200);
+        $directorate = Directorate::where('slug', $slug)->first();
+        return $this->successResponse((new DirectorateResource($directorate->load("files")->load("architecture"))), 200);
 
     }
 }

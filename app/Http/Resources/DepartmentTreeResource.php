@@ -4,7 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class ProcessTreeResource extends JsonResource
+class DepartmentTreeResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -15,10 +15,10 @@ class ProcessTreeResource extends JsonResource
     public function toArray($request)
     {
         return [
+            // "id" => $this->id,
             "title" => $this->title,
-            "code" => $this->code,
             "slug" => $this->slug,
-            "subProcesses" => SubProcessTreeResource::collection($this->whenLoaded("subProcesses"))
+            "positions"=>$this->evaluated_expert_positions_count +1
         ];
     }
 }

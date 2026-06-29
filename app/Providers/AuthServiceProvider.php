@@ -34,6 +34,7 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
         // Passport::routes();
+        if (file_exists(storage_path('oauth-private.key'))) {
         $server = app(AuthorizationServer::class);
         $grant = new PasswordGrant(
             app(UserRepository::class),
@@ -45,12 +46,14 @@ class AuthServiceProvider extends ServiceProvider
             $grant,
             new DateInterval('P1Y') // Access token valid for 1 year
         );
+        
         // عمر توکن‌ها (اختیاری)
-        Passport::tokensExpireIn(now()->addDays(15));
-        Passport::refreshTokensExpireIn(now()->addDays(30));
-        Passport::personalAccessTokensExpireIn(now()->addMonths(6));
+        // Passport::tokensExpireIn(now()->addDays(15));
+        // Passport::refreshTokensExpireIn(now()->addDays(30));
+        // Passport::personalAccessTokensExpireIn(now()->addMonths(6));
 
         // Passport::enableImplicitGrant();
         //
+        }
     }
 }

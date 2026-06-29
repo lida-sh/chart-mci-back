@@ -2,12 +2,14 @@
 
 namespace App;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Cviebrock\EloquentSluggable\Sluggable;
-class SubProcess extends Model
+class SeniorExpert extends Model
 {
+    use HasFactory;
     use Sluggable;
-    protected $table = "sub_processes";
+    protected $table = "senior_experts";
     protected $guarded = [];
     public function sluggable(): array
     {
@@ -17,15 +19,10 @@ class SubProcess extends Model
             ]
         ];
     }
-    public function process(){
-        return $this->belongsTo(Process::class, "process_id");
-    }
     public function architecture(){
         return $this->belongsTo(Architecture::class, "architecture_id");
     }
-    public function files(){
-        return $this->hasMany(SubProcessFile::class, "sub_process_id");
-    }
+    
     public function user(){
         return $this->belongsTo(User::class, "user_id");
     }

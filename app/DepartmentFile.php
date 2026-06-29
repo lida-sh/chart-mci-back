@@ -4,13 +4,13 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 
-class ProcessFile extends Model
+class DepartmentFile extends Model
 {
-    protected $table = "process_files";
+    protected $table = "department_files";
     protected $guarded = [];
 
-    public function process(){
-        return $this->belongsTo(Process::class, "process_id");
+    public function department(){
+        return $this->belongsTo(Department::class, "department_id");
     }
     public function scopeWithAllowedExtensions($query, $extensions = ['pdf', 'jpeg', 'png', 'jpg'])
     {

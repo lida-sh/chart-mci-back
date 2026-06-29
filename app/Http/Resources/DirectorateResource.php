@@ -4,7 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 use Hekmatinasser\Verta\Verta;
-class SubProcessResource extends JsonResource
+class DirectorateResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -17,17 +17,15 @@ class SubProcessResource extends JsonResource
         return [
             "id" => $this->id,
             "title" => $this->title,
-            "code" => $this->code,
             "slug" => $this->slug,
             "status" => $this->status,
+            "occupied" => $this->occupied,
+            "office_manager_count" => $this->office_manager_count,
             "architecture_id" => $this->architecture_id,
-            "process_id" => $this->process_id,
             "description" => $this->description,
-            "type"=> $this->type,
-            "notification_date" =>  $this->notification_date ? Verta::instance($this->notification_date)->format('Y/m/d'): "",
-            "files" => SubProcessFileResource::collection($this->whenLoaded("files")),
+            "type" => $this->type,
+            "files" => DirectorateFileResource::collection($this->whenLoaded("files")),
             "architecture" => new ArchitectureResource($this->whenLoaded("architecture")),
-            "process" => new ProcessResource($this->whenLoaded("process")),
             "user" => new userBaseResource($this->whenLoaded("user"))
         ];
     }

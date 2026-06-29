@@ -3,15 +3,15 @@
 namespace App\Http\Controllers\V1\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\SubProcessResource;
-use App\SubProcess;
-use App\SubProcessFile;
+use App\Http\Resources\DepartmentResource;
+use App\Department;
+use App\DepartmentFile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Hekmatinasser\Verta\Verta;
 use App\Services\DataConverter;
-class SubProcessController extends ApiController
+class DepartmentController extends ApiController
 {
     /**
      * Display a listing of the resource.
@@ -22,13 +22,13 @@ class SubProcessController extends ApiController
     {
         $search = $request->input("search");
         $architecture_id = $request->input("architecture_id");
-        $process_id = $request->input("process_id");
+        $directorate_id = $request->input("directorate_id");
         $status = $request->input("status");
         $sortedBy = $request->input("sortedBy");
-        $processes = SubProcess::query()->when($architecture_id, function ($query, $architecture_id) {
+        $departments = Department::query()->with(['architecture', 'directorate', 'user'])->when($architecture_id, function ($query, $architecture_id) {
             return $query->where("architecture_id", $architecture_id);
-        })->when($process_id, function ($query, $process_id) {
-            return $query->where("process_id", $process_id);
+        })->when($directorate_id, function ($query, $directorate_id) {
+            return $query->where("directorate_id", $directorate_id);
         })->when($status, function ($query, $status) {
             if ($status == 1) {
                 return $query->where("status", $status);
@@ -45,9 +45,9 @@ class SubProcessController extends ApiController
                 return $query->oldest();
         })->paginate(10);
         return $this->successResponse([
-            "subProcesses" => SubProcessResource::collection($processes->load(["architecture", "process", "user"])),
-            "links" => SubProcessResource::collection($processes)->response()->getData()->links,
-            "meta" => SubProcessResource::collection($processes)->response()->getData()->meta
+            "departments" => DepartmentResource::collection($departments),
+            "links" => DepartmentResource::collection($departments)->response()->getData()->links,
+            "meta" => DepartmentResource::collection($departments)->response()->getData()->meta
         ], 200);
     }
 
@@ -62,9 +62,13 @@ class SubProcessController extends ApiController
         
         $validator = Validator::make($request->all(), [
             "architecture_id" => "required|integer",
-            "process_id" => "required|integer",
-            "code" => "required|string|unique:sub_processes,code",
+            "directorate_id" => "nullable|integer",
             "status" => "required|string",
+            "occupied" => "required|string",
+            "evaluated_expert_positions_count" => "required|integer|min:0",
+            "old_permanent_experts_count" => "required|integer|min:0",
+            "old_contracting_experts_count" => "required|integer|min:0",
+            "old_below_expert_count" => "required|integer|min:0",
             "files.*" => "file|max:2048",
         ]);
         //"title" => "required|string|unique:sub_processes,title",
@@ -83,15 +87,18 @@ class SubProcessController extends ApiController
 
         DB::beginTransaction();
 
-        $subProcess = SubProcess::create([
+        $department = Department::create([
             "title" => $request->title,
-            "code" => $request->code,
             "status" => $request->status,
             "description" => $request->description,
+            "occupied" => $request->occupied,
+            "evaluated_expert_positions_count" => $request->evaluated_expert_positions_count,
+            "old_permanent_experts_count" => $request->old_permanent_experts_count,
+            "old_contracting_experts_count" => $request->old_contracting_experts_count,
+            "old_below_expert_count" => $request->old_below_expert_count,
             "architecture_id" => $request->architecture_id,
-            "process_id" => $request->process_id,
+            "directorate_id" => $request->directorate_id,
             "user_id" => auth()->user()->id,
-            "notification_date" => $request->notification_date,
 
         ]);
         if ($request->hasFile('files')) {
@@ -100,8 +107,8 @@ class SubProcessController extends ApiController
                 // $filePath = time() . '.' . $file->getClientOriginalName();
                 $filePath = time() . '.' . $file->getClientOriginalExtension();
                 $file->storeAs('/files/sub-processes', $filePath, 'public');
-                SubProcessFile::create([
-                    "sub_process_id" => $subProcess->id,
+                DepartmentFile::create([
+                    "department_id" => $department->id,
                     "fileName" => $fileName,
                     "filePath" => $filePath,
                     "status" => 1
@@ -112,7 +119,7 @@ class SubProcessController extends ApiController
         }
         DB::commit();
         // return response()->json($data, $code);
-        return $this->successResponse($subProcess, 201);
+        return $this->successResponse($department, 201);
     }
 
     /**
@@ -121,9 +128,9 @@ class SubProcessController extends ApiController
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show(SubProcess $subProcess)
+    public function show(Department $department)
     {
-        return $this->successResponse((new SubProcessResource($subProcess->load(["files", "architecture", "process"]))), 200);
+        return $this->successResponse((new DepartmentResource($department->load(["files", "architecture", "directorate"]))), 200);
     }
 
     /**
@@ -138,8 +145,13 @@ class SubProcessController extends ApiController
         
         $validator = Validator::make($request->all(), [
             "architecture_id" => "required|integer",
-            "process_id" => "required|integer",
-            "code" => "string|unique:sub_processes,code," . $id,
+            "directorate_id" => "nullable|integer",
+            "status" => "required|string",
+            "occupied" => "required|string",
+            "evaluated_expert_positions_count" => "required|integer|min:0",
+            "old_permanent_experts_count" => "required|integer|min:0",
+            "old_contracting_experts_count" => "required|integer|min:0",
+            "old_below_expert_count" => "required|integer|min:0",
             "files.*" => "file|max:2048",
         ]);
         //"title" => "string|unique:architectures,title," . $id,
@@ -157,20 +169,24 @@ class SubProcessController extends ApiController
         }
 
         DB::beginTransaction();
-        $subProcess = SubProcess::findOrFail($id);
-        $subProcess->slug = null;
-        $subProcess->update([
+        $department = Department::findOrFail($id);
+        $department->slug = null;
+        $department->update([
             "architecture_id" => $request->architecture_id,
-            "process_id" => $request->process_id,
+            "directorate_id" => $request->directorate_id,
             "title" => $request->title,
-            "code" => $request->code,
             "status" => $request->status,
             "description" => $request->description,
-            "notification_date" => DataConverter::convertToGregorian($request->notification_date),
+            "occupied" => $request->occupied,
+            "evaluated_expert_positions_count" => $request->evaluated_expert_positions_count,
+            "old_permanent_experts_count" => $request->old_permanent_experts_count,
+            "old_contracting_experts_count" => $request->old_contracting_experts_count,
+            "old_below_expert_count" => $request->old_below_expert_count,
+            "user_id" => auth()->user()->id,
         ]);
         if ($request->has("fileIdsForDelete")) {
             foreach ($request->fileIdsForDelete as $fileId) {
-                $file = SubProcessFile::findOrFail($fileId);
+                $file = DepartmentFile::findOrFail($fileId);
                 if (file_exists($file->filePath)) {
                     unlink($file->filePath);
                 }
@@ -182,15 +198,15 @@ class SubProcessController extends ApiController
                 $fileName = $file->getClientOriginalName();
                 $filePath = time() . '.' . $file->getClientOriginalExtension();
                 $file->storeAs('/files/sub-processes', $filePath, 'public');
-                SubProcessFile::create([
-                    "sub_process_id" => $subProcess->id,
+                DepartmentFile::create([
+                    "department_id" => $department->id,
                     "fileName" => $fileName,
                     "filePath" => $filePath
                 ]);
             }
         }
         DB::commit();
-        return $this->successResponse($subProcess, 200);
+        return $this->successResponse($department, 200);
     }
 
     /**
@@ -201,21 +217,21 @@ class SubProcessController extends ApiController
      */
     public function destroy($id)
     {
-        $subProcess = SubProcess::findOrFail($id);
-        foreach ($subProcess->files as $file) {
-            $fullPath = public_path('storage/files/sub-processes/'.$file->filePath);
+        $department = Department::findOrFail($id);
+        foreach ($department->files as $file) {
+            $fullPath = public_path('storage/files/departments/'.$file->filePath);
             if (file_exists($fullPath)) {
                 unlink($fullPath);
             }
-            SubProcessFile::findOrFail($file->id)->delete();
+            DepartmentFile::findOrFail($file->id)->delete();
         }
-        $subProcess->delete();
+        $department->delete();
         return $this->successResponse(1, 200);
     }
     public function showBySlug($slug)
     {
-        $process = SubProcess::where('slug', $slug)->first();
-        return $this->successResponse((new SubProcessResource($process->load(["files", "architecture", "process"]))), 200);
+        $department = Department::where('slug', $slug)->first();
+        return $this->successResponse((new DepartmentResource($department->load(["files", "architecture", "directorate"]))), 200);
 
     }
 }

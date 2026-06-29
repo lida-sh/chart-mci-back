@@ -4,7 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class SubProcessFileResource extends JsonResource
+class ArchitectureTopResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -16,9 +16,9 @@ class SubProcessFileResource extends JsonResource
     {
         return [
             "id" => $this->id,
-            "fileName" => $this->fileName,
-            "status" => $this->status,
-            "filePath" => url("/storage/files/sub-processes")."/".$this->filePath,
+            "title" => $this->title,
+            "slug" => $this->slug,
+            "type" => $this->type,
         ];
     }
 }

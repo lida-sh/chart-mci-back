@@ -4,7 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class ProcessFileResource extends JsonResource
+class SeniorExpertTreeResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -15,10 +15,9 @@ class ProcessFileResource extends JsonResource
     public function toArray($request)
     {
         return [
-            "id" => $this->id,
-            "fileName" => $this->fileName,
-            "status" => $this->status,
-            "filePath" => url("/storage/files/processes")."/".$this->filePath,
+            "title" => $this->title,
+            "slug" => $this->slug,
+            "positions_count"=>$this->positions_count
         ];
     }
 }

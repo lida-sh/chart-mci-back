@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateProceduresTable extends Migration
+class CreateDirectoratesTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,20 +13,18 @@ class CreateProceduresTable extends Migration
      */
     public function up()
     {
-        Schema::create('procedures', function (Blueprint $table) {
+        Schema::create('directorates', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->string('title')->unique();
             $table->string('slug')->unique();
-            $table->string('code')->unique();
-            $table->tinyInteger("status")->default(1);
-            $table->string("docType");
+            $table->unsignedTinyInteger("status")->default(1);
             $table->text('description')->nullable();
-            $table->unsignedBigInteger('architecture_id');
-            $table->unsignedBigInteger('process_id');
+            $table->unsignedTinyInteger('occupied')->default(1);
+            $table->unsignedTinyInteger('office_manager_count');
             $table->unsignedBigInteger("user_id");
-            $table->foreign('architecture_id')->references('id')->on('architectures')->onDelete('cascade');
-            $table->foreign('process_id')->references('id')->on('processes')->onDelete('cascade');
+            $table->unsignedBigInteger("architecture_id");
             $table->foreign("user_id")->references("id")->on("users")->onDelete("cascade");
+            $table->foreign("architecture_id")->references("id")->on("architectures")->onDelete("cascade");
             $table->softDeletes();
             $table->timestamps();
         });
@@ -39,6 +37,6 @@ class CreateProceduresTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('procedures');
+        Schema::dropIfExists('processes');
     }
 }

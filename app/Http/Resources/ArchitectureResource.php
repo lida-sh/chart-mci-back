@@ -17,11 +17,15 @@ class ArchitectureResource extends JsonResource
         return [
             "id" => $this->id,
             "title" => $this->title,
-            "code" => $this->code,
             "status" => $this->status,
             "slug" => $this->slug,
             "type" => $this->type,
             "description" => $this->description,
+            "office_manager_count" => $this->office_manager_count,
+            "old_positions_count" => $this->old_positions_count,
+            "old_expert_positions_count" => $this->old_expert_positions_count,
+            "old_directorates_count" => $this->old_directorates_count,
+            "old_departments_count" => $this->old_departments_count,
             "files" => ArchitectureFileResource::collection($this->whenLoaded("files")),
             "user" => new userBaseResource($this->whenLoaded("user"))
         ];

@@ -9,7 +9,8 @@ use App\Architecture;
 
 use App\ArchitectureFile;
 use App\Http\Resources\ArchitectureResource;
-use App\Http\Resources\ProcessResource;
+use App\Http\Resources\ArchitectureTreeResource;
+use App\Http\Resources\DirectorateResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -27,6 +28,7 @@ class ArchitectureController extends ApiController
     {
         
         $architectures = Architecture::all();
+        
         return response()->json($architectures, 200);
         // return $this->successResponse($architectures, 200);
     }
@@ -39,12 +41,18 @@ class ArchitectureController extends ApiController
      */
     public function store(Request $request)
     {
-
+        
         $validator = Validator::make($request->all(), [
             "title" => "required|string|unique:architectures,title",
-            "code" => "required|unique:architectures,code",
+            "type" => "required",
+            "status" => "required",
+            "office_manager_count"=>"required|integer|min:0",
+            "old_positions_count"=>"required|integer|min:0",
+            "old_expert_positions_count"=>"required|integer|min:0",
+            "old_directorates_count"=>"required|integer|min:0",
+            "old_departments_count"=>"required|integer|min:0",
             "files.*" => "file|max:2048",
-            "type" => "required"
+    
         ]);
 
         $allowedExtensions = ['bpm', 'jpg', 'jpeg', 'png', 'tiff', 'docx', 'doc', 'gif', 'pdf', 'pptx'];
@@ -63,17 +71,21 @@ class ArchitectureController extends ApiController
 
         $architecture = Architecture::create([
             "title" => $request->title,
-            "code" => $request->code,
             "description" => $request->description,
             "type" => $request->type,
-            "user_id" => auth()->user()->id
-
+            "status" => $request->status,
+            "office_manager_count" => $request->office_manager_count,
+            "old_positions_count" => $request->old_positions_count,
+            "old_expert_positions_count" => $request->old_expert_positions_count,
+            "old_directorates_count" => $request->old_directorates_count,
+            "old_departments_count" => $request->old_departments_count,
+            "user_id" => auth()->user()->id,
         ]);
         if ($request->hasFile('files')) {
             foreach ($request->file("files") as $file) {
                 $fileName = $file->getClientOriginalName();
                 $filePath = time() . '.' . $file->getClientOriginalName();
-                $file->storeAs('/images/architectures', $filePath, 'public');
+                $file->storeAs('/files/architectures', $filePath, 'public');
                 ArchitectureFile::create([
                     "architecture_id" => $architecture->id,
                     "fileName" => $fileName,
@@ -97,7 +109,7 @@ class ArchitectureController extends ApiController
      */
     public function show(Architecture $architecture)
     {
-
+        
         return $this->successResponse((new ArchitectureResource($architecture->load("files"))), 200);
     }
 
@@ -109,11 +121,16 @@ class ArchitectureController extends ApiController
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, $id)
-    {
-
+    { 
         $validator = Validator::make($request->all(), [
             "title" => "string|unique:architectures,title," . $id,
-            "code" => "string|unique:architectures,code," . $id,
+            "type" => "required",
+            "status" => "required",
+            "office_manager_count"=>"required|integer|min:0",
+            "old_positions_count"=>"required|integer|min:0",
+            "old_expert_positions_count"=>"required|integer|min:0",
+            "old_directorates_count"=>"required|integer|min:0",
+            "old_departments_count"=>"required|integer|min:0",
             "files.*" => "file|max:2048",
         ]);
 
@@ -134,9 +151,15 @@ class ArchitectureController extends ApiController
         $architecture = Architecture::findOrFail(($id));
         $architecture->update([
             "title" => $request->title,
-            "code" => $request->code,
             "type" => $request->type,
             "description" => $request->description,
+            "status" => $request->status,
+            "office_manager_count" => $request->office_manager_count,
+            "old_positions_count" => $request->old_positions_count,
+            "old_expert_positions_count" => $request->old_expert_positions_count,
+            "old_directorates_count" => $request->old_directorates_count,
+            "old_departments_count" => $request->old_departments_count,
+            "user_id" => auth()->user()->id,
         ]);
         if ($request->has("fileIdsForDelete")) {
             foreach ($request->fileIdsForDelete as $fileId) {
@@ -151,7 +174,7 @@ class ArchitectureController extends ApiController
             foreach ($request->file("files") as $file) {
                 $fileName = $file->getClientOriginalName();
                 $filePath = time() . '.' . $file->getClientOriginalName();
-                $file->storeAs('/images/architectures', $filePath, 'public');
+                $file->storeAs('/files/architectures', $filePath, 'public');
                 ArchitectureFile::create([
                     "architecture_id" => $architecture->id,
                     "fileName" => $fileName,
@@ -183,23 +206,27 @@ class ArchitectureController extends ApiController
         $architecture->delete();
         return $this->successResponse(1, 200);
     }
-    public function getProcessesOfArchitecture(Architecture $architecture)
+    
+    public function getDirectoratesOfArchitecture(Architecture $architecture)
     {
-        $processes = $architecture->processes;
-        return $this->successResponse(ProcessResource::collection($processes), 200);
+        
+        $directorates = $architecture->directorates;
+        return $this->successResponse(DirectorateResource::collection($directorates), 200);
     }
+    //گرفتن معماری ها
+
     public function getArchitectures(){    
-        $architectures = Architecture::paginate(3);
+        $architectures = Architecture::paginate(10);
            return $this->successResponse([
-            "architectures" => ArchitectureResource::collection($architectures->load(["user"])),
-            "links" => ArchitectureResource::collection($architectures)->response()->getData()->links,
-            "meta" => ArchitectureResource::collection($architectures)->response()->getData()->meta
+            "architectures" => ArchitectureTreeResource::collection($architectures->load(["user", "directorates", "rootDepartments", "seniorExperts"])),
+            "links" => ArchitectureTreeResource::collection($architectures)->response()->getData()->links,
+            "meta" => ArchitectureTreeResource::collection($architectures)->response()->getData()->meta
         ], 200);
    
     }
     public function showBySlug($slug)
     {
-
+        
         $architecture = Architecture::where('slug', $slug)->first();
         // dd($architecture);
         return $this->successResponse((new ArchitectureResource($architecture->load(["files", "user"]))), 200);

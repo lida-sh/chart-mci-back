@@ -9,7 +9,7 @@ class ArchitectureFile extends Model
     protected $table = "architecture_files";
     protected $guarded = [];
 
-    public function process(){
+    public function architecture(){
         return $this->belongsTo(Architecture::class, "architecture_id");
     }
     public function getFilePathAttribute($attr){

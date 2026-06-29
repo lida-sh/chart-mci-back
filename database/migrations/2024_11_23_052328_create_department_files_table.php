@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateProcessFilesTable extends Migration
+class CreateDepartmentFilesTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,13 +13,13 @@ class CreateProcessFilesTable extends Migration
      */
     public function up()
     {
-        Schema::create('process_files', function (Blueprint $table) {
+        Schema::create('department_files', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->unsignedBigInteger("process_id");
-            $table->foreign("process_id")->references("id")->on("processes")->onDelete("cascade");
+            $table->unsignedBigInteger("department_id");
+            $table->foreign("department_id")->references("id")->on("departments")->onDelete("cascade");
             $table->string("fileName");
             $table->string("filePath");
-            $table->tinyInteger("status")->default(1);
+            $table->unsignedTinyInteger("status")->default(1);
             $table->softDeletes();
             $table->timestamps();
         });
@@ -32,6 +32,6 @@ class CreateProcessFilesTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('process_files');
+        Schema::dropIfExists('sub_process_files');
     }
 }
