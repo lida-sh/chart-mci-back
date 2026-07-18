@@ -48,6 +48,8 @@ Route::group(['prefix' => 'admin','middleware' => ['auth:api']], function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/get-roles-permissions', [App\Http\Controllers\V1\Admin\UserController::class, "getRolesAndPermissions"]);
     Route::get('/get-architectures', [App\Http\Controllers\V1\Admin\ArchitectureController::class, "getArchitectures"]);
+    Route::get('/get-provinces', [App\Http\Controllers\V1\Admin\RegionController::class, "getProvinces"]);
+    Route::get('/get-region-directorates', [App\Http\Controllers\V1\Admin\RegionController::class, "getProvinces"]);
 });
 
 
