@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Province;
 use Illuminate\Http\Request;
 
-class RegionController extends Controller
+class RegionController extends ApiController
 {
     /**
      * Display a listing of the resource.
