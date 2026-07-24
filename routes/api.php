@@ -15,10 +15,13 @@ use \V1\Admin\ProcedureController;
 use \V1\Admin\DepartmentController;
 use \V1\Admin\ArchitectureController;
 use \V1\Admin\DirectorateController;
+use \V1\Admin\RegionDirectorateController;
 use \V1\Admin\UserController;
 use \V1\Admin\RoleController;
 use \V1\Admin\PermissionController;
 use App\Http\Controllers\Auth\AccessTokenController;
+use App\RegionDirectorate;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -36,6 +39,7 @@ use App\Http\Controllers\Auth\AccessTokenController;
 Route::group(['prefix' => 'admin','middleware' => ['auth:api']], function () {
     Route::apiResource('/architectures', ArchitectureController::class);
     Route::apiResource('/directorates', DirectorateController::class);
+    Route::apiResource('/region-directorates', RegionDirectorateController::class);
     Route::apiResource('/departments', DepartmentController::class);
     Route::apiResource('/users', UserController::class);
     Route::apiResource('/permissions', PermissionController::class);
