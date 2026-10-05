@@ -18,7 +18,9 @@ return new class extends Migration
             $table->unsignedSmallInteger("provisioned_lines_count_step");
             $table->unsignedSmallInteger("tower_count");
             $table->unsignedSmallInteger("tower_count_step");
-            
+            $table->unsignedBigInteger("user_id");
+            $table->foreign("user_id")->references("id")->on("users")->onDelete("cascade");
+            $table->softDeletes();
             $table->timestamps();
         });
     }

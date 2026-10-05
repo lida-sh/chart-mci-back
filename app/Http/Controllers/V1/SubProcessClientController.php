@@ -8,9 +8,11 @@ use App\Http\Resources\SubProcessDetailsClientResource;
 use App\SubProcess;
 use Illuminate\Http\Request;
 use App\Http\Controllers\V1\Admin\ApiController;
+
 class SubProcessClientController extends ApiController
 {
-    public function index(Request $request){
+    public function index(Request $request)
+    {
         $search = $request->input("search");
         $architecture_id = $request->input("architecture_id");
         $process_id = $request->input("process_id");
@@ -33,7 +35,8 @@ class SubProcessClientController extends ApiController
             "meta" => SubProcessClientResource::collection($subProcesses)->response()->getData()->meta
         ], 200);
     }
-    public function showBySlug($slug){
+    public function showBySlug($slug)
+    {
         $subProcesses = SubProcess::where('slug', $slug)->first();
         return $this->successResponse((new SubProcessDetailsClientResource($subProcesses->load(["files" => function ($query) {
             $query->withAllowedExtensions(['pdf', 'jpeg', 'png']); // فیلتر فایل‌ها بر اساس پسوند

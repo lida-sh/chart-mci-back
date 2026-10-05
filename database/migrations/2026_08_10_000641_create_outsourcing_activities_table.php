@@ -11,16 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('region_power_supply_pivots', function (Blueprint $table) {
+        Schema::create('outsourcing_activities', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger("power_supply_id");
-            $table->unsignedInteger("power_supply_count");
-            $table->unsignedInteger("province_id");
-            $table->foreign("province_id")->references("id")->on("provinces")->onDelete("cascade");
-            $table->foreign("power_supply_id")->references("id")->on("power_supplies")->onDelete("cascade");
+            $table->string("activity_title")->unique();
+            $table->string("unit");
+            $table->enum('type', ['pivotal', 'provincial']);
+            $table->text('description')->nullable();
             $table->unsignedBigInteger("user_id");
             $table->foreign("user_id")->references("id")->on("users")->onDelete("cascade");
-            $table->softDeletes();
             $table->timestamps();
         });
     }
@@ -30,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('region_power_supply_pivots');
+        Schema::dropIfExists('outsourcing_activities');
     }
 };

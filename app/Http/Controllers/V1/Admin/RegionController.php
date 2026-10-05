@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\V1\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\CenterPivotResource;
 use App\Province;
 use Illuminate\Http\Request;
 
@@ -63,8 +64,19 @@ class RegionController extends ApiController
     {
         //
     }
-    public function getProvinces(){
+    public function getProvinces()
+    {
         $provinces = Province::all();
         return $this->successResponse($provinces, 200);
+    }
+    public function getCities(Province $province)
+    {
+        $cities = $province->cities;
+        return $this->successResponse($cities, 200);
+    }
+    public function getCenterPivots(Province $province)
+    {
+        $centerPivots = $province->centerPivots;
+        return $this->successResponse(CenterPivotResource::collection($centerPivots->load(["user", "cities"])), 200);
     }
 }

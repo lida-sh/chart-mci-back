@@ -16,8 +16,11 @@ return new class extends Migration
             $table->string("title");
             $table->unsignedInteger("in_service_count");
             $table->unsignedTinyInteger("capacity");
-            $table->unsignedSmallInteger("center_pivote_id");
-            $table->foreign("center_pivote_id")->references("id")->on("center_pivots")->onDelete("cascade");
+            $table->unsignedBigInteger("center_pivot_id");
+            $table->foreign("center_pivot_id")->references("id")->on("center_pivots")->onDelete("cascade");
+            $table->unsignedBigInteger("user_id");
+            $table->foreign("user_id")->references("id")->on("users")->onDelete("cascade");
+            $table->softDeletes();
             $table->timestamps();
         });
     }

@@ -13,11 +13,14 @@ return new class extends Migration
     {
         Schema::create('region_outsourced_activity_pivots', function (Blueprint $table) {
             $table->id();
-            $table->unsignedSmallInteger("outsourced_activity_id");
+            $table->unsignedBigInteger("outsourced_activity_id");
             $table->unsignedInteger("outsourced_activity_count");
-            $table->unsignedSmallInteger("province_id");
+            $table->unsignedInteger("province_id");
             $table->foreign("province_id")->references("id")->on("provinces")->onDelete("cascade");
             $table->foreign("outsourced_activity_id")->references("id")->on("outsourced_activities")->onDelete("cascade");
+            $table->unsignedBigInteger("user_id");
+            $table->foreign("user_id")->references("id")->on("users")->onDelete("cascade");
+            $table->softDeletes();
             $table->timestamps();
         });
     }

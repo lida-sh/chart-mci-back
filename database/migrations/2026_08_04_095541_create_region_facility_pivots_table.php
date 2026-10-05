@@ -13,11 +13,14 @@ return new class extends Migration
     {
         Schema::create('region_facility_pivots', function (Blueprint $table) {
             $table->id();
-            $table->unsignedSmallInteger("facility_id");
-            $table->unsignedSmallInteger("facility_count");
-            $table->unsignedSmallInteger("province_id");
+            $table->unsignedBigInteger("facility_id");
+            $table->unsignedInteger("facility_count");
+            $table->unsignedInteger("province_id");
             $table->foreign("province_id")->references("id")->on("provinces")->onDelete("cascade");
             $table->foreign("facility_id")->references("id")->on("facilities")->onDelete("cascade");
+            $table->unsignedBigInteger("user_id");
+            $table->foreign("user_id")->references("id")->on("users")->onDelete("cascade");
+            $table->softDeletes();
             $table->timestamps();
         });
     }

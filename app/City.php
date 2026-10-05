@@ -5,18 +5,18 @@ namespace App;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class RegionTechnicalInfo extends Model
+class City extends Model
 {
     use HasFactory;
-    protected $table = "region_technical_infos";
+    protected $table = "cities";
     protected $guarded = [];
-    public function user()
-    {
-        return $this->belongsTo(User::class, "user_id");
-    }
+    public $timestamps = false;
     public function province()
     {
         return $this->belongsTo(Province::class, "province_id");
     }
-    
+    public function centerPivot()
+    {
+        return $this->belongsTo(CenterPivot::class, 'center_pivot_id');
+    }
 }

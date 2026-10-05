@@ -5,18 +5,17 @@ namespace App;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class RegionTechnicalInfo extends Model
+class OrganizationalUnitType extends Model
 {
     use HasFactory;
-    protected $table = "region_technical_infos";
+    protected $table = "region_organizational_unit_types";
     protected $guarded = [];
     public function user()
     {
         return $this->belongsTo(User::class, "user_id");
     }
-    public function province()
+    public function orgType()
     {
-        return $this->belongsTo(Province::class, "province_id");
+        return $this->belongsTo(OrganizationalUnitType::class, "region_organizational_unit_type_id");
     }
-    
 }

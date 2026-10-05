@@ -14,17 +14,21 @@ return new class extends Migration
         Schema::create('center_pivots', function (Blueprint $table) {
             $table->id();
             $table->string("number_pivot");
-            $table->string("title");
+            $table->string('slug')->unique();
             $table->unsignedInteger("active_access_count");
             $table->unsignedInteger("active_fttx_count");
             $table->unsignedInteger("fault_count");
             $table->unsignedInteger("installed_and_displacement_count");
             $table->unsignedInteger("access_fiber_length_km");
             $table->unsignedInteger("transport_fiber_length_km");
-            $table->unsignedSmallInteger("province_id");
+            $table->text('description')->nullable();
+            $table->unsignedInteger("province_id");
             $table->foreign("province_id")->references("id")->on("provinces")->onDelete("cascade");
+            $table->unsignedBigInteger("user_id");
+            $table->foreign("user_id")->references("id")->on("users")->onDelete("cascade");
+            $table->unique(['province_id', 'number_pivot']);
+            $table->softDeletes();
             $table->timestamps();
-            
         });
     }
 
