@@ -8,7 +8,7 @@ use App\Province;
 use Illuminate\Http\Request;
 use App\Http\Controllers\V1\Admin\ApiController;
 use App\OutsourcingActivity;
-
+use App\RegionTechnicalInfo;
 class OutsourcingController extends ApiController
 {
     /**
@@ -52,6 +52,7 @@ class OutsourcingController extends ApiController
     }
     public function calculate(Request $request)
     {
+        // dd($request->all());
 
         $provinceId = $request->province_id;
         $calculatMethod = $request->calculation_method;
@@ -59,24 +60,50 @@ class OutsourcingController extends ApiController
         $province = Province::findOrFail($provinceId);
         $regionCoefficient  = $province->regionTechnicalInfo->region_coefficient;
         $activities = [];
-        foreach (OutsourcingActivity::all() as $outsourcingActivity) {
-            $activities[$outsourcingActivity->id] = [
-                'id' => $outsourcingActivity->id,
-                'title' => $outsourcingActivity->activity_title,
-                'unit' => $outsourcingActivity->unit,
-                'manMonths' => 0,
-                'count' => 0,
-            ];
-        }
+        
 
         if ($calculatMethod == 1) {
+            $pivotalActivities = OutsourcingActivity::where('type', 'pivotal')
+                ->orderBy('id')
+                ->get();
+
+            foreach ($pivotalActivities as $index => $activity) {
+                $activities[$index + 1] = [
+                    'id' => $activity->id,
+                    'title' => $activity->activity_title,
+                    'unit' => $activity->unit,
+                    'manMonths' => 0,
+                    'count' => 0,
+                ];
+            }
+            // $i = 0;
+            // foreach (OutsourcingActivity::all() as $outsourcingActivity) {
+            //     if($outsourcingActivity->type === 'pivotal'){
+            //         $activities[$i++] = [
+            //             'id' => $i,
+            //             'title' => $outsourcingActivity->activity_title,
+            //             'unit' => $outsourcingActivity->unit,
+            //             'manMonths' => 0,
+            //             'count' => 0,
+            //         ];
+            //     }
+            // }
             $centerPivot = CenterPivot::findOrFail($centerPivotId);
             [$activities[1]['manMonths'], $activities[1]['count']] = $this->copperNetworkMaintenance($centerPivot);
-            [$activities[2]['manMonths'], $activities[2]['count']] = $this->fiberNetworkMaintenance($province, $centerPivot);
-            [$activities[3]['manMonths'], $activities[3]['count']] = $this->FTTXMaintenance($centerPivot);
-            [$activities[4]['manMonths'], $activities[4]['count']] = $this->accessSistemsMaintenance($centerPivot);
-            [$activities[5]['manMonths'], $activities[5]['count']] = $this->lowCapacityMaintenance($centerPivot);
+            [$activities[2]['manMonths'], $activities[2]['count']] = $this->FTTXMaintenance($centerPivot);
+            [$activities[3]['manMonths'], $activities[3]['count']] = $this->accessSistemsMaintenance($centerPivot);
+            [$activities[4]['manMonths'], $activities[4]['count']] = $this->lowCapacityMaintenance($centerPivot);
+            // [$activities[2]['manMonths'], $activities[2]['count']] = $this->fiberNetworkMaintenance($province, $centerPivot);
         } else {
+            foreach (OutsourcingActivity::all() as $outsourcingActivity) {
+                $activities[$outsourcingActivity->id] = [
+                    'id' => $outsourcingActivity->id,
+                    'title' => $outsourcingActivity->activity_title,
+                    'unit' => $outsourcingActivity->unit,
+                    'manMonths' => 0,
+                    'count' => 0,
+                ];
+            }
             $provisionedLinesCount = $province->regionTechnicalInfo->provisioned_lines_count;
             $provisionedLinesmanMonths = 0;
             $towerCount = $province->regionTechnicalInfo->tower_count;
@@ -85,9 +112,10 @@ class OutsourcingController extends ApiController
                 [$manMonths, $count] = $this->copperNetworkMaintenance($center);
                 $activities[1]['manMonths'] += $manMonths;
                 $activities[1]['count'] += $count;
-                [$manMonths, $count] = $this->fiberNetworkMaintenance($province, $center);
-                $activities[2]['manMonths'] += $manMonths;
-                $activities[2]['count'] += $count;
+
+                // [$manMonths, $count] = $this->fiberNetworkMaintenance($province, $center);
+                // $activities[2]['manMonths'] += $manMonths;
+                // $activities[2]['count'] += $count;
 
                 [$manMonths, $count] = $this->FTTXMaintenance($center);
                 $activities[3]['manMonths'] += $manMonths;
@@ -101,6 +129,11 @@ class OutsourcingController extends ApiController
                 $activities[5]['manMonths'] += $manMonths;
                 $activities[5]['count'] += $count;
             }
+
+            [$manMonths, $count] = $this->fiberNetworkMaintenance($province);
+            $activities[2]['manMonths'] = $manMonths;
+            $activities[2]['count'] = $count;
+
             foreach ($province->powerSupplies as $powerSupply) {
                 $activities[6]['manMonths'] += $powerSupply->unit * $powerSupply->pivot->power_supply_count;
                 $activities[6]['count'] += $powerSupply->pivot->power_supply_count;
@@ -123,6 +156,7 @@ class OutsourcingController extends ApiController
             }
             $activities[9]['manMonths'] = $towerCountmanMonths;
             $activities[9]['count'] = $towerCount;
+           
         }
         return $this->successResponse([
             "activities" => $activities,
@@ -165,41 +199,49 @@ class OutsourcingController extends ApiController
         }
         return [$fttxUnit, $fttxCount];
     }
-    protected function fiberNetworkMaintenance(Province $province, CenterPivot $centerPivot)
+    protected function fiberNetworkMaintenance(Province $province, CenterPivot $centerPivot=null)
     {
-        $SumOfTransFibers = 0;
-        $sumOfAccessFibers = 0;
+        
+        // $SumOfTransFibers = 0;
+        // $sumOfAccessFibers = 0;
+        $region_technical_info = RegionTechnicalInfo::where('province_id', $province->id)->first();
+        
+        $sumOfTransFibers = $region_technical_info->transport_fiber_length_km;
+        $sumOfAccessFibers = $region_technical_info->access_fiber_length_km;
         $RT = 0;
         $RA = 0;
-        foreach ($province->centerPivots as $center) {
-            $SumOfTransFibers += $center->transport_fiber_length_km;
-            $sumOfAccessFibers += $center->access_fiber_length_km;
-        }
-        
-        $transFiber = $centerPivot->transport_fiber_length_km ?? 0;
-        $accessFiber = $centerPivot->access_fiber_length_km ?? 0;
+        // foreach ($province->centerPivots as $center) {
+        //     $sumOfTransFibers += $center->transport_fiber_length_km;
+        //     $sumOfAccessFibers += $center->access_fiber_length_km;
+        // }
+
+        // $transFiber = $centerPivot->transport_fiber_length_km ?? 0;
+        // $accessFiber = $centerPivot->access_fiber_length_km ?? 0;
         $transUnit = 0;
         $accessUnit = 0;
-        if ($SumOfTransFibers > 0) {
-            if ($SumOfTransFibers <= 250) {
+        if ($sumOfTransFibers > 0) {
+            if ($sumOfTransFibers <= 250) {
                 $RT = 1;
-            } else if ($SumOfTransFibers > 250 && $SumOfTransFibers <= 1000) {
-                $RT = 1 + (0.1 * (($SumOfTransFibers - 250) / 50));
-            } else if ($SumOfTransFibers > 1000) {
-                $RT = 1 + (0.1 * (((1000 - 250) / 50) + (($SumOfTransFibers - 1000) / 60)));
+            } else if ($sumOfTransFibers > 250 && $sumOfTransFibers <= 1000) {
+                $RT = 1 + (0.1 * (($sumOfTransFibers - 250) / 50));
+            } else if ($sumOfTransFibers > 1000) {
+                $RT = 1 + (0.1 * (((1000 - 250) / 50) + (($sumOfTransFibers - 1000) / 60)));
             }
-            $transUnit = ($RT * $transFiber) / $SumOfTransFibers;
-            if($sumOfAccessFibers > 0){
-                if ($sumOfAccessFibers <= 50) {
-                    $RA = 1;
-                } else if ($sumOfAccessFibers > 50) {
-                    $RA = 1 + (0.1 * (($sumOfAccessFibers - 50) / 20));
-                }
-            }
-            
+            // $transUnit = ($RT * $transFiber) / $sumOfTransFibers;
+            $transUnit = $RT;
         }
-        $accessUnit = $RA * ($accessFiber / $sumOfAccessFibers);
-        return [$transUnit + $accessUnit, $transFiber + $accessFiber];
+        if ($sumOfAccessFibers > 0) {
+            if ($sumOfAccessFibers <= 50) {
+                $RA = 1;
+            } else if ($sumOfAccessFibers > 50) {
+                $RA = 1 + (0.1 * (($sumOfAccessFibers - 50) / 20));
+            }
+            // $accessUnit = $RA * ($accessFiber / $sumOfAccessFibers);
+            $accessUnit = $RA;
+        }
+        
+        // return [$transUnit + $accessUnit, $transFiber + $accessFiber];
+        return [$transUnit + $accessUnit, $sumOfTransFibers + $sumOfAccessFibers];
     }
     protected function copperNetworkMaintenance(CenterPivot $centerPivot)
     {

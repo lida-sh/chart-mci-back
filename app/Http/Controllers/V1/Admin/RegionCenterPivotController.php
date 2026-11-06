@@ -28,10 +28,10 @@ class RegionCenterPivotController extends ApiController
             return $query->where("province_id", $provinceId);
         })->when($cityId, function ($query, $cityId) {
             return $query->whereHas('cities', function ($q) use ($cityId) {
-                $q->where('id', $cityId);
+                $q->where('cities.id', $cityId);
             });
         })->when($search, function ($query, $search) {
-            return $query->where('title', 'LIKE', "%{$search}%");
+            return $query->where('number_pivot', 'LIKE', "%{$search}%");
         })->when($sortedBy, function ($query, $sortedBy) {
             return match ($sortedBy) {
                 'newest' => $query->orderBy('created_at', 'desc'),
@@ -52,7 +52,7 @@ class RegionCenterPivotController extends ApiController
      */
     public function store(Request $request)
     {
-        // dd($request->all());
+        
         $validator = Validator::make($request->all(), [
             "province_id" => "required|integer",
             'city_id' => 'required|array|min:1',
@@ -65,10 +65,10 @@ class RegionCenterPivotController extends ApiController
             ],
             "active_access_count" => "required|integer|min:0",
             "active_fttx_count" => "required|integer|min:0",
-            "fault_count" => "required|integer|min:0",
-            "installed_and_displacement_count" => "required|integer|min:0",
-            "access_fiber_length_km" => "required|integer|min:0",
-            "transport_fiber_length_km" => "required|integer|min:0",
+            "fault_count" => "required|numeric|min:0",
+            "installed_and_displacement_count" => "required|numeric|min:0",
+            // "access_fiber_length_km" => "required|integer|min:0",
+            // "transport_fiber_length_km" => "required|integer|min:0",
         ]);
         if ($validator->fails()) {
             return $this->errorResponse($validator->messages(), 422);
@@ -83,17 +83,12 @@ class RegionCenterPivotController extends ApiController
             "active_fttx_count" => $request->active_fttx_count,
             "fault_count" => $request->fault_count,
             "installed_and_displacement_count" => $request->installed_and_displacement_count,
-            "access_fiber_length_km" => $request->access_fiber_length_km,
-            "transport_fiber_length_km" => $request->transport_fiber_length_km,
+            "access_fiber_length_km" => 0,
+            "transport_fiber_length_km" => 0,
             "description" => $request->description,
             "user_id" => auth()->user()->id,
         ]);
-        foreach ($request->city_id as $city_id) {
-            $city = City::findOrFail($city_id);
-            $city->update([
-                'center_pivot_id' => $center_pivot->id
-            ]);
-        }
+        $center_pivot->cities()->sync($request->city_id);
 
         DB::commit();
         // return response()->json($data, $code);
@@ -126,10 +121,10 @@ class RegionCenterPivotController extends ApiController
             ],
             "active_access_count" => "required|integer|min:0",
             "active_fttx_count" => "required|integer|min:0",
-            "fault_count" => "required|integer|min:0",
-            "installed_and_displacement_count" => "required|integer|min:0",
-            "access_fiber_length_km" => "required|integer|min:0",
-            "transport_fiber_length_km" => "required|integer|min:0",
+            "fault_count" => "required|numeric|min:0",
+            "installed_and_displacement_count" => "required|numeric|min:0",
+            // "access_fiber_length_km" => "required|integer|min:0",
+            // "transport_fiber_length_km" => "required|integer|min:0",
         ]);
         if ($validator->fails()) {
             return $this->errorResponse($validator->messages(), 422);
@@ -145,29 +140,13 @@ class RegionCenterPivotController extends ApiController
             "active_fttx_count" => $request->active_fttx_count,
             "fault_count" => $request->fault_count,
             "installed_and_displacement_count" => $request->installed_and_displacement_count,
-            "access_fiber_length_km" => $request->access_fiber_length_km,
-            "transport_fiber_length_km" => $request->transport_fiber_length_km,
+            // "access_fiber_length_km" => $request->access_fiber_length_km,
+            // "transport_fiber_length_km" => $request->transport_fiber_length_km,
             "description" => $request->description,
             "user_id" => auth()->user()->id,
         ]);
-        // حذف ارتباط شهرهایی که دیگر انتخاب نشده‌اند
-        City::where('center_pivot_id', $centerPivot->id)
-            ->whereNotIn('id', $request->city_id)
-            ->update([
-                'center_pivot_id' => null
-            ]);
-
-        // اضافه کردن/به‌روزرسانی شهرهای انتخاب‌شده
-        City::whereIn('id', $request->city_id)
-            ->update([
-                'center_pivot_id' => $centerPivot->id
-            ]);
-        // foreach ($request->city_id as $city_id) {
-        //     $city = City::findOrFail($city_id);
-        //     $city->update([
-        //         'center_pivot_id' => $centerPivot->id
-        //     ]);
-        // }
+        
+        $centerPivot->cities()->sync($request->city_id);
 
         DB::commit();
         return $this->successResponse($centerPivot, 200);
@@ -178,14 +157,16 @@ class RegionCenterPivotController extends ApiController
      */
     public function destroy(string $id)
     {
-        //
+        $centerPivot = CenterPivot::findOrFail($id);
+        $centerPivot->delete();
+        return $this->successResponse(1, 200);
     }
     public function getcitiesByProvince(string $id)
     {
 
         $cities = City::query()
             ->where('province_id', $id)
-            ->whereNotNull('center_pivot_id')
+            ->whereHas('centerPivots')
             ->select('id', 'title')
             ->get();
 

@@ -22,7 +22,7 @@ class RegionPositionController extends ApiController
      */
     public function store(Request $request)
     {
-        dd($request->all());
+        // dd($request->all());
         $position = RegionPosition::create([
             "title" => $request->title,
             "position_type"=>$request->position_type,

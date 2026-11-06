@@ -4,6 +4,7 @@ namespace App\Http\Controllers\V1\Admin;
 
 use App\RegionOrganizationalUnit;
 use App\Province;
+use App\City;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\RegionOrgUnitResource;
 use App\RegionPosition;
@@ -63,7 +64,7 @@ class RegionOrganizationalUnitController extends ApiController
      */
     public function store(Request $request)
     {
-        dd($request->all());
+        // dd($request->all());
         $validator = Validator::make($request->all(), [
             "province_id" => "required|integer",
             "city_id" => "nullable|integer",
@@ -71,6 +72,7 @@ class RegionOrganizationalUnitController extends ApiController
             "title_id" => "required|integer",
             "status" => "required|integer",
             "type" => "required|integer",
+            "capacity_level_id" => "nullable|integer",
             "files" => "nullable|array",
             "files.*" => "file|max:2048",
             "posts" => "array",
@@ -104,6 +106,7 @@ class RegionOrganizationalUnitController extends ApiController
             "is_active" => $request->status,
             'sort_order' => ($maxSortOrder ?? 0) + 1,
             "region_organizational_unit_type_id" => $request->type,
+            "capacity_level_id" => $request->capacity_level_id,
             "description" => $request->description,
             "user_id" => auth()->user()->id,
         ]);
@@ -160,6 +163,7 @@ class RegionOrganizationalUnitController extends ApiController
             "status" => "required|integer",
             "sort_order" => "nullable|integer",
             "type" => "required|integer",
+            "capacity_level_id" => "nullable|integer",
             "files" => "nullable|array",
             "files.*" => "file|max:2048",
             "posts" => "array",
@@ -186,6 +190,7 @@ class RegionOrganizationalUnitController extends ApiController
             "is_active" => $request->status,
             'sort_order' => $request->sort_order,
             "region_organizational_unit_type_id" => $request->type,
+            "capacity_level_id" => $request->capacity_level_id,
             "description" => $request->description,
             "user_id" => auth()->user()->id,
         ]);
@@ -270,17 +275,63 @@ class RegionOrganizationalUnitController extends ApiController
      */
     public function destroy(string $id)
     {
-        //
+        $orgUnit = RegionOrganizationalUnit::findOrFail($id);
+        foreach ($orgUnit->files as $file) {
+            $fullPath = public_path('storage/files/region-org-units' . $file->filePath);
+            if (file_exists($fullPath)) {
+                unlink($fullPath);
+            }
+            RegionOrgUnitFile::findOrFail($file->id)->delete();
+        }
+        $orgUnit->delete();
+        return $this->successResponse(1, 200);
     }
     public function getTree(string  $provinceId, ?string $cityId = null)
     {
         // dd($provinceId, $cityId);
+        $province = Province::findOrFail($provinceId);
         $query = RegionOrganizationalUnit::query()->with([
-            "province",
-            "city",
+            // "province",
+            // "city",
             "orgType",
-            "user",
+            // "user",
             "parent",
+            "telecomCapacityLevel",
+            "children",
+        ])
+            ->where('province_id', $provinceId)
+            ->whereNull('parent_id');
+
+        if ($cityId === null || $cityId === 'null') {
+            $provinceCenterCityId = City::where('province_id', $provinceId)
+                ->where('is_province_center', true)
+                ->value('id');
+            // واحدهای ستادی بدون شهر
+            // $query->whereNull('city_id');
+            $query->where(function ($q) use ($provinceCenterCityId) {
+                $q->whereNull('city_id');
+
+                if ($provinceCenterCityId !== null) {
+                    $q->orWhere('city_id', $provinceCenterCityId);
+                }
+            });
+        } else {
+            // واحدهای مربوط به یک شهر
+            $query->where('city_id', $cityId);
+        }
+
+        $region_org_units = $query
+            ->get();
+        // dd($region_org_units);
+        return $this->successResponse(['province' =>  $province->title,
+         'units' => RegionOrgUnitResource::collection($region_org_units)], 200);
+    }
+    public function getParentTree(string  $provinceId, ?string $cityId = null)
+    {
+        
+        // $province = Province::findOrFail($provinceId);
+        $query = RegionOrganizationalUnit::query()->with([
+            "orgType",
             "children",
         ])
             ->where('province_id', $provinceId)
@@ -296,8 +347,6 @@ class RegionOrganizationalUnitController extends ApiController
 
         $region_org_units = $query
             ->get();
-        //  dd($region_org_units);
-        // return $this->successResponse(($region_org_units), 200);
         return $this->successResponse(RegionOrgUnitResource::collection($region_org_units), 200);
     }
     public function getTreeById(string  $provinceId, string $unitId)
@@ -309,6 +358,7 @@ class RegionOrganizationalUnitController extends ApiController
             "orgType",
             "user",
             "parent",
+            "telecomCapacityLevel",
             "children",
         ])
             ->where('province_id', $provinceId)

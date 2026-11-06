@@ -15,8 +15,11 @@ class City extends Model
     {
         return $this->belongsTo(Province::class, "province_id");
     }
-    public function centerPivot()
+    public function centerPivots()
     {
-        return $this->belongsTo(CenterPivot::class, 'center_pivot_id');
+        return $this->belongsToMany(CenterPivot::class,
+            'city_center_pivot',
+            'city_id',
+            'center_pivot_id');
     }
 }

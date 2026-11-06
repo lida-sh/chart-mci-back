@@ -54,6 +54,8 @@ class RegionTechnicalInfoController extends ApiController
             "region_coefficient" => "required|numeric|between:0,1",
             "provisioned_lines_count" => "required|integer|min:0",
             "tower_count" => "required|integer|min:0",
+            "access_fiber_length_km" => "required|integer|min:0",
+            "transport_fiber_length_km" => "required|integer|min:0",
             "powerSupplies" => "required|array",
             "powerSupplies.*" => "required|integer|min:0",
             "facilities" => "required|array",
@@ -70,6 +72,8 @@ class RegionTechnicalInfoController extends ApiController
             "region_coefficient" => $request->region_coefficient,
             "provisioned_lines_count" => $request->provisioned_lines_count,
             "tower_count" => $request->tower_count,
+            "access_fiber_length_km" => $request->access_fiber_length_km,
+            "transport_fiber_length_km" => $request->transport_fiber_length_km,
             "user_id" => auth()->user()->id,
         ]);
         foreach ($request->powerSupplies as $type => $count) {
@@ -101,18 +105,7 @@ class RegionTechnicalInfoController extends ApiController
      */
     public function show(RegionTechnicalInfo $technicalInfo)
     {
-        // $powerSupplies = [];
-        // $facilities = [];
-        // foreach (PowerSupply::all() as $powerSupply) {
-        //     $powerSupplies[] = [
-        //         $powerSupply->power_supply_id => $powerSupply->power_supply_count
-        //     ];
-        // }
-        // foreach (Facility::all() as $facility) {
-        //     $facilities[] = [
-        //         $facility->facility_id => $facility->facility_count
-        //     ];
-        // }
+
         return $this->successResponse((new RegionTechnicalInfoResource($technicalInfo->load([
             'province.powerSupplies',
             'province.facilities',
@@ -129,6 +122,8 @@ class RegionTechnicalInfoController extends ApiController
             "region_coefficient" => "required|numeric|between:0,1",
             "provisioned_lines_count" => "required|integer|min:0",
             "tower_count" => "required|integer|min:0",
+            "access_fiber_length_km" => "required|integer|min:0",
+            "transport_fiber_length_km" => "required|integer|min:0",
             "powerSupplies" => "required|array",
             "powerSupplies.*" => "required|integer|min:0",
             "facilities" => "required|array",
@@ -145,6 +140,8 @@ class RegionTechnicalInfoController extends ApiController
             "region_coefficient" => $request->region_coefficient,
             "provisioned_lines_count" => $request->provisioned_lines_count,
             "tower_count" => $request->tower_count,
+            "access_fiber_length_km" => $request->access_fiber_length_km,
+            "transport_fiber_length_km" => $request->transport_fiber_length_km,
             "user_id" => auth()->user()->id,
         ]);
         foreach ($request->powerSupplies as $type => $count) {

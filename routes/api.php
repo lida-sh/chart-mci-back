@@ -74,16 +74,18 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth:api']], function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/get-roles-permissions', [App\Http\Controllers\V1\Admin\UserController::class, "getRolesAndPermissions"]);
     Route::get('/get-architectures', [App\Http\Controllers\V1\Admin\ArchitectureController::class, "getArchitectures"]);
-    Route::get('/get-provinces', [App\Http\Controllers\V1\Admin\RegionController::class, "getProvinces"]);
     Route::get('/provinces/{province}/cities-center-pivots', [App\Http\Controllers\V1\Admin\RegionCenterPivotController::class, "getcitiesByProvince"]);
     Route::get('/provinces/{province}/center-pivots', [App\Http\Controllers\V1\Admin\RegionController::class, "getCenterPivots"]);
     Route::get('/provinces/{province}/cities', [App\Http\Controllers\V1\Admin\RegionController::class, "getCities"]);
     Route::get('/get-region-directorates', [App\Http\Controllers\V1\Admin\RegionController::class, "getProvinces"]);
     Route::get('/get-technical-parameters', [App\Http\Controllers\V1\Admin\RegionTechnicalInfoController::class, "getTechnicalParameters"]);
     Route::get('/get-tree-region-org-units/{provinceId}/{cityId?}', [App\Http\Controllers\V1\Admin\RegionOrganizationalUnitController::class, "getTree"]);
+    Route::get('/get-tree-region-org-parent-units/{provinceId}/{cityId?}', [App\Http\Controllers\V1\Admin\RegionOrganizationalUnitController::class, "getParentTree"]);
     Route::get('/get-tree-region-org-units/{provinceId}/units/{unitId}', [App\Http\Controllers\V1\Admin\RegionOrganizationalUnitController::class, "getTreeById"]);
+    Route::get('/get-telecom-capacity-levels', [App\Http\Controllers\V1\Admin\TelecomCapacityLevelController::class, "getTelecomCapacitiesLevels"]);
 });
 
+Route::get('/get-provinces', [App\Http\Controllers\V1\Admin\RegionController::class, "getProvinces"]);
 
 
 Route::post('/login', [AuthController::class, 'login']);
@@ -106,13 +108,7 @@ Route::get("/architectures/{architecture}/processes", [SearchController::class, 
 Route::get("/advanced-search", [SearchController::class, 'doAdvancedSearch']);
 Route::get("/get-ocr-results", [SearchController::class, 'getOcrResults']);
 
-Route::get("/search", [SearchController::class, 'doSearch']);
-Route::get('/procedures', [ProcedureClientController::class, 'index']);
-Route::get('/processes', [ProcessClientController::class, 'index']);
-Route::get('/sub-processes', [SubProcessClientController::class, 'index']);
-Route::get('/procedures-details/{slug}', [ProcedureClientController::class, "showBySlug"]);
-Route::get('/sub-processes-details/{slug}', [SubProcessClientController::class, "showBySlug"]);
-Route::get('/processes-details/{slug}', [ProcessClientController::class, "showBySlug"]);
+// 
 Route::get('/architectures/{slug}', [ArchitectureClientController::class, "getTreeStructure"]);
 Route::get('/top-chart', [ArchitectureClientController::class, "getTopChart"]);
 Route::post('/calculate-outsourcing', [OutsourcingController::class, "calculate"]);

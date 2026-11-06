@@ -36,6 +36,7 @@ class RegionOrganizationalUnit extends Model
             'province',
             'city',
             'orgType',
+            "telecomCapacityLevel",
             'user');
     }
     public function province()
@@ -53,6 +54,10 @@ class RegionOrganizationalUnit extends Model
     public function orgType()
     {
         return $this->belongsTo(OrganizationalUnitType::class, "region_organizational_unit_type_id");
+    }
+    public function telecomCapacityLevel()
+    {
+        return $this->belongsTo(TelecomCapacityLevel::class, "capacity_level_id");
     }
     public function files()
     {

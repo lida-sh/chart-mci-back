@@ -19,6 +19,8 @@ class RegionTechnicalInfoResource extends JsonResource
             "region_coefficient" => $this->region_coefficient,
             "provisioned_lines_count" => $this->provisioned_lines_count,
             "tower_count" => $this->tower_count,
+            "access_fiber_length_km" => $this->access_fiber_length_km,
+            "transport_fiber_length_km" => $this->transport_fiber_length_km,
             "province" => new ProvinceResource(
                 $this->whenLoaded("province")
             ),

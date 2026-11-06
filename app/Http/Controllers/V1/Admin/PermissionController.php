@@ -7,6 +7,7 @@ use App\Permission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use App\Http\Resources\PermissionResource;
 
 class PermissionController extends ApiController
 {
@@ -33,19 +34,18 @@ class PermissionController extends ApiController
             "permission_name" => "required|string|unique:permissions,name",
             "permission_display_name" => "required|string",
         ]);
-        if($validator->fails()){
+        if ($validator->fails()) {
             return $this->errorResponse($validator->messages(), 422);
         }
         DB::beginTransaction();
         $permission = Permission::create([
-            "name"=> $request->permission_name,
-            "display_name"=> $request->permission_display_name,
-            "guard_name"=>"api"
+            "name" => $request->permission_name,
+            "display_name" => $request->permission_display_name,
+            "guard_name" => "api"
 
         ]);
         DB::commit();
         return $this->successResponse($permission, 201);
-
     }
 
     /**
@@ -56,7 +56,8 @@ class PermissionController extends ApiController
      */
     public function show($id)
     {
-        //
+        $permission = Permission::findOrFail($id);
+        return $this->successResponse((new PermissionResource($permission)), 200);
     }
 
     /**
@@ -68,7 +69,22 @@ class PermissionController extends ApiController
      */
     public function update(Request $request, $id)
     {
-        //
+        $validator = Validator::make($request->all(), [
+            "permission_name" => "required|string|unique:permissions,name," . $id,
+            "permission_display_name" => "required|string",
+        ]);
+        if ($validator->fails()) {
+            return $this->errorResponse($validator->messages(), 422);
+        }
+        DB::beginTransaction();
+        $permission = Permission::findOrFail($id);
+        $permission->update([
+            "name" => $request->permission_name,
+            "display_name" => $request->permission_display_name,
+            "guard_name" => "api"
+        ]);
+        DB::commit();
+        return $this->successResponse($permission, 200);
     }
 
     /**
@@ -79,6 +95,8 @@ class PermissionController extends ApiController
      */
     public function destroy($id)
     {
-        //
+        $permission = Permission::findOrFail($id);
+        $permission->delete();
+        return $this->successResponse(1, 200);
     }
 }

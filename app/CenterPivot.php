@@ -20,7 +20,12 @@ class CenterPivot extends Model
     }
     public function cities()
     {
-        return $this->hasMany(City::class, "center_pivot_id");
+        return $this->belongsToMany(
+            City::class,
+            'city_center_pivot',
+            'center_pivot_id',
+            'city_id'
+        );
     }
     public function user()
     {

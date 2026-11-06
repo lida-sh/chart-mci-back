@@ -40,12 +40,12 @@ class AuthServiceProvider extends ServiceProvider
             app(UserRepository::class),
             app(RefreshTokenRepository::class)
         );
-        $grant->setRefreshTokenTTL(new DateInterval('P1M')); // Refresh token valid for 1 month
+        $grant->setRefreshTokenTTL(new DateInterval('P7D')); // Refresh token valid for 7 days
 
         $server->enableGrantType(
             $grant,
-            new DateInterval('P1Y') // Access token valid for 1 year
-        );
+            new DateInterval('PT2H') // Access token valid for 2 hours
+            );
         
         // عمر توکن‌ها (اختیاری)
         // Passport::tokensExpireIn(now()->addDays(15));

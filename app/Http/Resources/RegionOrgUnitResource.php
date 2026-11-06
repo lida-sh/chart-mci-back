@@ -24,11 +24,18 @@ class RegionOrgUnitResource extends JsonResource
             "province_id" => $this->province_id,
             "city_id" => $this->city_id,
             "parent_id" => $this->parent_id,
+            "capacity_level_id" => $this->capacity_level_id,
             "province" => $this->whenLoaded("province"),
             "city" => $this->whenLoaded("city", function () {
                 return $this->city?->title;
             }, "ستاد"),
             "orgType" => $this->whenLoaded("orgType"),
+            "telecomCapacityLevel" => $this->whenLoaded(
+                "telecomCapacityLevel",
+                fn() => $this->capacity_level_id !== null
+                    ? $this->telecomCapacityLevel
+                    : null
+            ),
             "parent" => $this->parent ? $this->parent->title->title : "مدیر منطقه",
             "children"=> RegionOrgUnitResource::collection($this->whenLoaded("children")),
             "files" => RegionOrgUnitFileResource::collection($this->whenLoaded("files")),
